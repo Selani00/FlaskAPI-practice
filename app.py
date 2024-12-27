@@ -22,3 +22,7 @@ api=Api(app)
 api.register_blueprint(ItemBlueprint)
 api.register_blueprint(StoreBlueprint)
 
+
+# why use SQLAlchemy
+# SQLAlchemy is a library that facilitates the communication between Python programs and databases.It's ORM(Object Relational Mapper) library that provides a way to interact with databases using Python objects. It is a high-level abstraction of the SQL database, which allows us to interact with the database without writing SQL queries.
+

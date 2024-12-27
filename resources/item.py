@@ -4,10 +4,13 @@ from flask.views import MethodView
 from flask_smorest import abort, Blueprint
 from db import items, stores
 
+from schemas import ItemSchema, ItemUpdateSchema
+
 blp = Blueprint("items", __name__, description="Operations on items")
 
 @blp.route('/item/<item_id>')
 class Store(MethodView):
+    @blp.response(200, ItemSchema)
     def get(self, item_id):
         try:
             return items[item_id]
@@ -21,11 +24,10 @@ class Store(MethodView):
         except KeyError:
             abort(404, message="Store not found.")
 
-
-    def put(self, item_id):
-        item_data = request.get_json()
-        if "name" not in item_data or "price" not in item_data:
-            abort(400, message="Invalid item data.")
+    @blp.arguments(ItemUpdateSchema) # Here we decorate the method with the schema
+    @blp.response(200, ItemSchema) # this is down 
+    def put(self,item_data, item_id):
+        
         try:
             item = items[item_id]
             item |= item_data # how to update a dictionary in python
@@ -36,15 +38,9 @@ class Store(MethodView):
 
 @blp.route('/item')
 class Store(MethodView):
-    def post(self):
-        item_data = request.get_json()
-        if(
-            "name" not in item_data or
-            "price" not in item_data or
-            "store_id" not in item_data
-        ):
-            abort(400, message="Invalid item data."
-        )
+    @blp.arguments(ItemSchema) # Here we decorate the method with the schema
+    @blp.response(201, ItemSchema) # this is down
+    def post(self,item_data):
 
         for item in items.values():
             if item["name"] == item_data["name"] and item["store_id"] == item_data["store_id"]:
@@ -57,7 +53,8 @@ class Store(MethodView):
         item = {**item_data, "id": item_id}
         items[item_id] = item
 
-        return  item, 201
+        return  item
     
+    @blp.response(200, ItemSchema(many=True))
     def get(self):
-        return {"items": list(items.values())}
+        return items.values()
