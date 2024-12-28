@@ -2,8 +2,9 @@ import uuid
 from flask import request
 from flask.views import MethodView
 from flask_smorest import abort, Blueprint
-from db import items, stores
-
+from sqlalchemy.exc import SQLAlchemyError
+from db import db
+from models import ItemModel
 from schemas import ItemSchema, ItemUpdateSchema
 
 blp = Blueprint("items", __name__, description="Operations on items")
@@ -42,16 +43,16 @@ class Store(MethodView):
     @blp.response(201, ItemSchema) # this is down
     def post(self,item_data):
 
-        for item in items.values():
-            if item["name"] == item_data["name"] and item["store_id"] == item_data["store_id"]:
-                abort(400, message="An item with the same name already exists.")
+        item = ItemModel(**item_data) # how to create a dictionary in python
 
-        if item_data["store_id"] not in stores:
-            abort(404, message="Store not found.")
-        
-        item_id  = uuid.uuid4().hex
-        item = {**item_data, "id": item_id}
-        items[item_id] = item
+        try:
+            db.session.add(item)
+            db.session.commit()
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            abort(400, message="An error occurred while adding the item.")
+
 
         return  item
     
