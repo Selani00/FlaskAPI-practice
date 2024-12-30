@@ -44,6 +44,24 @@ class Tag(MethodView):
         tag = TagModel.query.get_or_404(tag_id)
         return tag
     
+
+    @blp.response(
+        202, 
+        description="Deletes a tag if no item is tagged with it.",
+        example={"message": "Tag deleted."},
+    )
+    @blp.alt_response(404, description="Tag not found.")
+    @blp.alt_response(400, description="Returned if the tag is still linked to an item.")
+    def delete(self, tag_id):
+        tag = TagModel.query.get_or_404(tag_id)
+        if tag.items.count() > 0:
+            abort(409, message="The tag is still linked to an item.")
+        db.session.delete(tag)
+        db.session.commit()
+        return {"message": "Tag deleted."}
+
+
+    
 @blp.route("/item/<string:item_id>/tag/<string:tag_id>")
 class LinkTagsToItem(MethodView):
     @blp.response(201, TagSchema)
